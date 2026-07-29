@@ -1,0 +1,24 @@
+# Системные файлы Windows
+Thumbs.db
+Desktop.ini
+
+# macOS
+.DS_Store
+
+# Логи
+*.log
+
+# Настройки редакторов
+.vscode/
+.idea/
+
+# Временные файлы
+*.tmp
+*.temp
+
+# Кэш браузера
+.cache/
+
+# Секреты
+.env
+.env.*
