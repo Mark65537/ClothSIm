@@ -1,11 +1,11 @@
-let device, context, pipeline, vertexBuffer;
+let device, context, fillPipeline, linePipeline, vertexBuffer, triangleIndexBuffer, lineIndexBuffer;
 
 function render() {
     const texture = context.getCurrentTexture();
     const encoder = device.createCommandEncoder();
 
     // Render Pass
-    const pass = encoder.beginRenderPass({
+    const renderPass = encoder.beginRenderPass({
         colorAttachments: [{
             view: texture.createView(),
             clearValue: { r: 0.1, g: 0.2, b: 0.8, a: 1 },
@@ -14,11 +14,16 @@ function render() {
         }]
     });
 
-    pass.setPipeline(pipeline);
-    pass.setVertexBuffer(0, vertexBuffer);
-    pass.setIndexBuffer(indexBuffer, "uint16");
-    pass.drawIndexed(6);
-    pass.end();
+    renderPass.setPipeline(fillPipeline);
+    renderPass.setVertexBuffer(0, vertexBuffer);
+    renderPass.setIndexBuffer(triangleIndexBuffer, "uint16");
+    renderPass.drawIndexed(6);
+
+    renderPass.setPipeline(linePipeline);
+    renderPass.setIndexBuffer(lineIndexBuffer, "uint16");
+    renderPass.drawIndexed(10);
+
+    renderPass.end();
 
     // Передаем команды видеокарте
     device.queue.submit([encoder.finish()]);
@@ -57,11 +62,12 @@ async function initWebGPU() {
 async function main() {
     await initWebGPU()
 
-    const shaderCode = await fetch("shaders/triangle.wgsl")
+    // TRIANGLE----------------------------
+    const TriangleShaderCode = await fetch("shaders/triangle.wgsl")
         .then(response => response.text());
 
-    const shaderModule = device.createShaderModule({
-        code: shaderCode
+    const TriangleShaderModule = device.createShaderModule({
+        code: TriangleShaderCode
     });
 
     const vertices = new Float32Array([
@@ -71,7 +77,7 @@ async function main() {
         0.6, -0.6, 0,//→↓
     ]);
 
-    const indices = new Uint16Array([
+    const squareIndices = new Uint16Array([
         0, 2, 3,
         0, 1, 3,
     ]);
@@ -83,9 +89,9 @@ async function main() {
             GPUBufferUsage.COPY_DST
     });
 
-    indexBuffer = device.createBuffer({
+    triangleIndexBuffer = device.createBuffer({
 
-        size: indices.byteLength,
+        size: squareIndices.byteLength,
 
         usage:
             GPUBufferUsage.INDEX |
@@ -100,17 +106,17 @@ async function main() {
     );
 
     device.queue.writeBuffer(
-        indexBuffer,
+        triangleIndexBuffer,
         0,
-        indices
+        squareIndices
     );
 
     const format = navigator.gpu.getPreferredCanvasFormat();
 
-    pipeline = device.createRenderPipeline({
+    fillPipeline = device.createRenderPipeline({
         layout: "auto",
         vertex: {
-            module: shaderModule,
+            module: TriangleShaderModule,
             entryPoint: "vertexMain",
             buffers: [{
                 arrayStride: 12,
@@ -124,7 +130,7 @@ async function main() {
         },
 
         fragment: {
-            module: shaderModule,
+            module: TriangleShaderModule,
             entryPoint: "fragmentMain",
             targets: [{ format }]
         },
@@ -135,6 +141,66 @@ async function main() {
 
     });
 
+
+    // LINES--------------------------
+
+    const lineShaderCode = await fetch("shaders/line.wgsl")
+        .then(response => response.text());
+
+    const lineShaderModule = device.createShaderModule({
+        code: lineShaderCode
+    });
+
+    const lineIndices = new Uint16Array([
+        0, 1, // верх
+        1, 3, // право
+        3, 2, // низ
+        2, 0,  // лево
+        0, 3, // диагональ
+    ]);
+
+    lineIndexBuffer = device.createBuffer({
+        size: lineIndices.byteLength,
+        usage:
+            GPUBufferUsage.INDEX |
+            GPUBufferUsage.COPY_DST
+    });
+
+    device.queue.writeBuffer(
+        lineIndexBuffer,
+        0,
+        lineIndices
+    );
+
+    linePipeline = device.createRenderPipeline({
+        layout: "auto",
+        vertex: {
+            module: lineShaderModule,
+            entryPoint: "vertexMain",
+            buffers: [{
+                arrayStride: 12,
+                attributes: [{
+                    shaderLocation: 0,
+                    offset: 0,
+                    format: "float32x3"
+                }]
+            }]
+        },
+
+
+        fragment: {
+            module: lineShaderModule,
+            entryPoint: "lineFragment",
+            targets: [{
+                format
+            }]
+        },
+
+        primitive: {
+            topology: "line-list"
+        }
+
+    });
 
     render();
 }
