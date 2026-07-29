@@ -15,7 +15,9 @@ function render() {
     });
 
     pass.setPipeline(pipeline);
-    pass.draw(3);
+    pass.setVertexBuffer(0, vertexBuffer);
+    pass.setIndexBuffer(indexBuffer, "uint16");
+    pass.drawIndexed(6);
     pass.end();
 
     // Передаем команды видеокарте
@@ -62,14 +64,63 @@ async function main() {
         code: shaderCode
     });
 
+    const vertices = new Float32Array([
+        -0.6, 0.6, 0,// ←↑
+        0.6, 0.6, 0,// →↑
+        -0.6, -0.6, 0,//←↓        
+        0.6, -0.6, 0,//→↓
+    ]);
+
+    const indices = new Uint16Array([
+        0, 2, 3,
+        0, 1, 3,
+    ]);
+
+    vertexBuffer = device.createBuffer({
+        size: vertices.byteLength,
+        usage:
+            GPUBufferUsage.VERTEX |
+            GPUBufferUsage.COPY_DST
+    });
+
+    indexBuffer = device.createBuffer({
+
+        size: indices.byteLength,
+
+        usage:
+            GPUBufferUsage.INDEX |
+            GPUBufferUsage.COPY_DST
+
+    });
+
+    device.queue.writeBuffer(
+        vertexBuffer,
+        0,
+        vertices
+    );
+
+    device.queue.writeBuffer(
+        indexBuffer,
+        0,
+        indices
+    );
+
     const format = navigator.gpu.getPreferredCanvasFormat();
 
     pipeline = device.createRenderPipeline({
         layout: "auto",
         vertex: {
-            module: device.createShaderModule({
-                code: shaderCode,
-            }),
+            module: shaderModule,
+            entryPoint: "vertexMain",
+            buffers: [{
+                arrayStride: 12,
+                attributes:
+                    [{
+                        shaderLocation: 0,
+                        offset: 0,
+                        format: "float32x3"
+                    }]
+            }]
         },
 
         fragment: {

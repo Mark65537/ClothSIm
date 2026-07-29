@@ -1,18 +1,27 @@
-@vertex
-fn vertexMain(@builtin(vertex_index) index: u32)
-    -> @builtin(position) vec4<f32>
+struct VertexInput
 {
-    var positions = array<vec2<f32>, 3>(
-        vec2<f32>(0.0, 0.5),
-        vec2<f32>(-0.5, -0.5),
-        vec2<f32>(0.5, -0.5)
-    );
+    @location(0)
+    position : vec3f,
+};
 
-    return vec4<f32>(positions[index], 0.0, 1.0);
+struct VertexOutput
+{
+    @builtin(position)
+    position : vec4f,
+};
+
+@vertex
+fn vertexMain(input : VertexInput) -> VertexOutput
+{
+    var output : VertexOutput;
+
+    output.position = vec4f(input.position, 1.0);
+
+    return output;
 }
 
 @fragment
-fn fragmentMain() -> @location(0) vec4<f32>
+fn fragmentMain() -> @location(0) vec4f
 {
-    return vec4<f32>(1.0, 0.0, 0.0, 1.0);
+    return vec4(1.0, 0.0, 0.0, 1.0);
 }
