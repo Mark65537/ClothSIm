@@ -1,19 +1,7 @@
 export default class Vertex {
     constructor(x, y, z = 0) {
-        this.position =
-        {
-            x,
-            y,
-            z
-        };
-
-        this.previous =
-        {
-            x,
-            y,
-            z
-        };
-
-        this.fixed = false;
+        this.position = { x, y, z };
+        this.oldPosition = { x, y, z };
+        this.isPinned = false;
     }
 }

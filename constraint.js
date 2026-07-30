@@ -5,10 +5,9 @@ export class Constraint {
         this.b = b;
         this.distance = distance;
     }
-
 }
 
-// Теперь функция принимает vertices, чтобы измерить реальное начальное расстояние
+/** Создание неких правил ограничений */
 export function createConstraints(vertices, cols, rows) {
     if (cols <= 0 ) {
         console.error('Количество столбцов должно быть больше нуля');
@@ -32,19 +31,24 @@ export function createConstraints(vertices, cols, rows) {
 
     for (let y = 0; y < rows; y++) {
         for (let x = 0; x < cols; x++) {
-            const index = y * cols + x;
+            const strideC = cols + 1;
+            const strideR = rows + 1;
 
-            if (x < cols - 1) {
+            const index = y * strideC + x;
+
+            if (x < strideC - 1) {
                 constraints.push(new Constraint(index, index + 1, getDist(index, index + 1)));
             }
-            if (y < rows - 1) {
-                constraints.push(new Constraint(index, index + cols, getDist(index, index + cols)));
+            if (y < strideC - 1) {
+                constraints.push(new Constraint(index, index + strideC, getDist(index, index + strideC)));
             }
-            if (x < cols - 1 && y < rows - 1) {
-                constraints.push(new Constraint(index, index + cols + 1, getDist(index, index + cols + 1)));
+
+            // Диагональные связи (чуть более мягкие = 0.5, чтобы ткань не перекашивало)
+            if (x < strideC - 1 && y < strideR - 1) {
+                constraints.push(new Constraint(index, index + strideC + 1, getDist(index, index + strideC + 1)));
             }
-            if (x > 0 && y < rows - 1) {
-                constraints.push(new Constraint(index, index + cols - 1, getDist(index, index + cols - 1)));
+            if (x > 0 && y < strideR - 1) {
+                constraints.push(new Constraint(index, index + strideC - 1, getDist(index, index + strideC - 1)));
             }
         }
     }
@@ -57,6 +61,8 @@ export function solveConstraints(vertices, constraints) {
     for (const c of constraints) {
         const v1 = vertices[c.a];
         const v2 = vertices[c.b];
+        if (v1 === undefined ) console.error(`Vertex vertices[${c.a}] не найден`);
+
         const p1 = v1.position;
         const p2 = v2.position;
 

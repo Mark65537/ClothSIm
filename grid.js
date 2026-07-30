@@ -66,10 +66,10 @@ export function generateGrid(cols, rows, size = 1.2) {
     }
 
     // Закрепляем углы
-    vertices[0].fixed = true;
-    vertices[cols].fixed = true;
-    vertices[rows * (cols + 1)].fixed = true;
-    vertices[(rows + 1) * (cols + 1) - 1].fixed = true;
+    vertices[0].isPinned = true;
+    vertices[cols].isPinned = true;
+    vertices[rows * (cols + 1)].isPinned = true;
+    vertices[(rows + 1) * (cols + 1) - 1].isPinned = true;
 
     return {
         vertices,
