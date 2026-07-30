@@ -1,3 +1,21 @@
+import Vertex from "./Vertex.js";
+
+export function createVertexArray(vertices)
+{
+    const data = new Float32Array(vertices.length * 3);
+
+    for(let i = 0; i < vertices.length; i++)
+    {
+        const v = vertices[i];
+
+        data[i * 3 + 0] = v.position.x;
+        data[i * 3 + 1] = v.position.y;
+        data[i * 3 + 2] = v.position.z;
+    }
+
+    return data;
+}
+
 export function generateGrid(cols, rows, size = 1.2) {
 
     const vertices = [];
@@ -13,13 +31,7 @@ export function generateGrid(cols, rows, size = 1.2) {
     // ---------- вершины ----------
     for (let y = 0; y <= rows; y++) {
         for (let x = 0; x <= cols; x++) {
-
-            vertices.push(
-                startX + x * dx,
-                startY - y * dy,
-                0
-            );
-
+            vertices.push(new Vertex(startX + x * dx, startY - y * dy, 0));
         }
     }
 
@@ -53,8 +65,14 @@ export function generateGrid(cols, rows, size = 1.2) {
         }
     }
 
+    // Закрепляем углы
+    vertices[0].fixed = true;
+    vertices[cols].fixed = true;
+    vertices[rows * (cols + 1)].fixed = true;
+    vertices[(rows + 1) * (cols + 1) - 1].fixed = true;
+
     return {
-        vertices: new Float32Array(vertices),
+        vertices,
         triangleIndices: new Uint16Array(triangleIndices),
         lineIndices: new Uint16Array(lineIndices)
     };

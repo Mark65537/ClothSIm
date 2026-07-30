@@ -1,6 +1,15 @@
+import { createVertexArray } from './grid.js';
+
+let clothVertices = [];
+
 async function loadShader(device, path) {
     const code = await fetch(path).then(r => r.text());
     return device.createShaderModule({ code });
+}
+
+function updateVertexBuffer(device, vertexBuffer) {
+    const gpuVertices = createVertexArray(clothVertices);
+    device.queue.writeBuffer(vertexBuffer, 0, gpuVertices);
 }
 
 function createVertexBuffer(device, vertices) {
@@ -62,7 +71,10 @@ async function createPipeline(device, format, shaderFile, topology, fragmentEntr
 
 export async function createRenderer(device, context, format, grid) {
 
-    const vertexBuffer = createVertexBuffer(device, grid.vertices);
+    clothVertices = grid.vertices;
+    const gpuVertices = createVertexArray(clothVertices);
+
+    const vertexBuffer = createVertexBuffer(device, gpuVertices);
 
     const triangleIndexBuffer = createIndexBuffer(device, grid.triangleIndices);
     const lineIndexBuffer = createIndexBuffer(device, grid.lineIndices);
@@ -85,6 +97,12 @@ export async function createRenderer(device, context, format, grid) {
 
     //TODO : вынести в отдельную функцию
     function render() {
+
+        // изменение данных ткани
+        clothVertices[60].position.y += 0.1;
+
+        // отправляем новые вершины на GPU
+        updateVertexBuffer(device, vertexBuffer);
 
         const encoder = device.createCommandEncoder();
 
