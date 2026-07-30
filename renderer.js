@@ -98,8 +98,12 @@ export async function createRenderer(device, context, format, grid) {
     //TODO : вынести в отдельную функцию
     function render() {
 
+        const time = performance.now() * 0.001;
+
+        const center = Math.floor(clothVertices.length / 2);
+
         // изменение данных ткани
-        clothVertices[60].position.y += 0.1;
+        clothVertices[center].position.y = Math.sin(time) * 0.2;
 
         // отправляем новые вершины на GPU
         updateVertexBuffer(device, vertexBuffer);
