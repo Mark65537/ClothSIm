@@ -74,6 +74,8 @@ export function generateGrid(cols, rows, size = 1.2) {
     return {
         vertices,
         triangleIndices: new Uint16Array(triangleIndices),
-        lineIndices: new Uint16Array(lineIndices)
+        lineIndices: new Uint16Array(lineIndices),
+        COLS: cols, 
+        ROWS: rows
     };
 }

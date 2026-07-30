@@ -1,4 +1,5 @@
 import { createVertexArray } from './grid.js';
+import { createConstraints, solveConstraints } from './constraint.js';
 
 let clothVertices = [];
 
@@ -73,6 +74,7 @@ export async function createRenderer(device, context, format, grid) {
 
     clothVertices = grid.vertices;
     const gpuVertices = createVertexArray(clothVertices);
+    const constraints = createConstraints(clothVertices, grid.COLS, grid.ROWS);
 
     const vertexBuffer = createVertexBuffer(device, gpuVertices);
 
@@ -103,7 +105,15 @@ export async function createRenderer(device, context, format, grid) {
         const center = Math.floor(clothVertices.length / 2);
 
         // изменение данных ткани
-        clothVertices[center].position.y = Math.sin(time) * 0.2;
+        clothVertices[center].position.y += Math.sin(time) * 0.2;
+        // for (const v of clothVertices) {
+        //     v.position.y -= 0.001;
+        // }
+
+        // учитываются все вершины а не одна
+        for (let i = 0; i < 5; i++) {
+            solveConstraints(clothVertices, constraints);
+        }
 
         // отправляем новые вершины на GPU
         updateVertexBuffer(device, vertexBuffer);
