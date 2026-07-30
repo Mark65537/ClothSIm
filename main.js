@@ -1,4 +1,7 @@
 let device, context, fillPipeline, linePipeline, vertexBuffer, triangleIndexBuffer, lineIndexBuffer;
+let triangleIndexCount;
+let lineIndexCount;
+const COLS = 10, ROWS = 10, SIZE = 1.2;
 
 function render() {
     const texture = context.getCurrentTexture();
@@ -17,11 +20,11 @@ function render() {
     renderPass.setPipeline(fillPipeline);
     renderPass.setVertexBuffer(0, vertexBuffer);
     renderPass.setIndexBuffer(triangleIndexBuffer, "uint16");
-    renderPass.drawIndexed(6);
+    renderPass.drawIndexed(triangleIndexCount);
 
     renderPass.setPipeline(linePipeline);
     renderPass.setIndexBuffer(lineIndexBuffer, "uint16");
-    renderPass.drawIndexed(10);
+    renderPass.drawIndexed(lineIndexCount);
 
     renderPass.end();
 
@@ -59,6 +62,68 @@ async function initWebGPU() {
     });
 }
 
+function generateGrid(cols, rows, size = 1.2) {
+
+    const vertices = [];
+    const triangleIndices = [];
+    const lineIndices = [];
+
+    const dx = size / cols;
+    const dy = size / rows;
+
+    const startX = -size / 2;
+    const startY = size / 2;
+
+    // ---------- вершины ----------
+    for (let y = 0; y <= rows; y++) {
+        for (let x = 0; x <= cols; x++) {
+
+            vertices.push(
+                startX + x * dx,
+                startY - y * dy,
+                0
+            );
+
+        }
+    }
+
+    const stride = cols + 1;
+
+    // ---------- индексы ----------
+    for (let y = 0; y < rows; y++) {
+        for (let x = 0; x < cols; x++) {
+
+            const v0 = y * stride + x;
+            const v1 = v0 + 1;
+            const v2 = v0 + stride;
+            const v3 = v2 + 1;
+
+            // два треугольника
+            triangleIndices.push(
+                v0, v2, v3,
+                v0, v1, v3
+            );
+
+            // линии квадрата
+            lineIndices.push(
+                v0, v1,
+                v1, v3,
+                v3, v2,
+                v2, v0,
+
+                // диагональ
+                v0, v3
+            );
+        }
+    }
+
+    return {
+        vertices: new Float32Array(vertices),
+        triangleIndices: new Uint16Array(triangleIndices),
+        lineIndices: new Uint16Array(lineIndices)
+    };
+}
+
 async function main() {
     await initWebGPU()
 
@@ -70,17 +135,12 @@ async function main() {
         code: TriangleShaderCode
     });
 
-    const vertices = new Float32Array([
-        -0.6, 0.6, 0,// ←↑
-        0.6, 0.6, 0,// →↑
-        -0.6, -0.6, 0,//←↓        
-        0.6, -0.6, 0,//→↓
-    ]);
+    const grid = generateGrid(COLS, ROWS, SIZE);
 
-    const squareIndices = new Uint16Array([
-        0, 2, 3,
-        0, 1, 3,
-    ]);
+    const vertices = grid.vertices;
+    const squareIndices = grid.triangleIndices;
+
+    triangleIndexCount = squareIndices.length;
 
     vertexBuffer = device.createBuffer({
         size: vertices.byteLength,
@@ -151,13 +211,9 @@ async function main() {
         code: lineShaderCode
     });
 
-    const lineIndices = new Uint16Array([
-        0, 1, // верх
-        1, 3, // право
-        3, 2, // низ
-        2, 0,  // лево
-        0, 3, // диагональ
-    ]);
+    const lineIndices = grid.lineIndices;
+
+    lineIndexCount = lineIndices.length;
 
     lineIndexBuffer = device.createBuffer({
         size: lineIndices.byteLength,
