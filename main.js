@@ -2,7 +2,8 @@ import { initWebGPU } from "./webGPU.js";
 import { generateGrid } from "./grid.js";
 import { createRenderer } from "./renderer.js";
 
-const COLS = 10, ROWS = 10, SIZE = 1.2;
+const COLS = 2, ROWS = 2, //количество квадратов, не вершин
+SIZE = 1.2;
 
 async function main() {
 

@@ -1,5 +1,5 @@
-import { createVertexArray } from './grid.js';
-import { createConstraints, solveConstraints, updatePhysics } from './constraint.js';
+import { vertexToArray } from './grid.js';
+import { createConstraints, solveConstraints } from './constraint.js';
 
 let clothVertices = [];
 
@@ -9,7 +9,7 @@ async function loadShader(device, path) {
 }
 
 function updateVertexBuffer(device, vertexBuffer) {
-    const gpuVertices = createVertexArray(clothVertices);
+    const gpuVertices = vertexToArray(clothVertices);
     device.queue.writeBuffer(vertexBuffer, 0, gpuVertices);
 }
 
@@ -72,8 +72,8 @@ async function createPipeline(device, format, shaderFile, topology, fragmentEntr
 
 export async function createRenderer(device, context, format, grid) {
 
-    clothVertices = grid.vertices;
-    const gpuVertices = createVertexArray(clothVertices);
+    clothVertices = grid.vertices;// Все вершины в типе Vertex
+    const gpuVertices = vertexToArray(clothVertices);
     const constraints = createConstraints(clothVertices, grid.COLS, grid.ROWS);
 
     const vertexBuffer = createVertexBuffer(device, gpuVertices);
@@ -96,16 +96,19 @@ export async function createRenderer(device, context, format, grid) {
         "line-list",
         "lineFragment"
     );
+    
+    // высчитываем центральную вершину
+    const center = Math.floor(clothVertices.length / 2);
 
     //TODO : вынести в отдельную функцию
     function render() {
 
+        // update
         const time = performance.now() * 0.001;
 
-        const center = Math.floor(clothVertices.length / 2);
 
         // изменение данных ткани
-        clothVertices[center].position.y = Math.sin(time) * 0.2;
+        clothVertices[center].position.z = Math.sin(time) * 0.2;
 
         // учитываются все вершины а не одна
         for (let i = 0; i < 5; i++) {

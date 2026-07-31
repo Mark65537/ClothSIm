@@ -1,6 +1,12 @@
 import Vertex from "./Vertex.js";
 
-export function createVertexArray(vertices)
+/**
+ * Функция для конвертации класса Vertex в массив
+ *
+ * @param {Vertex[]} vertices - массив вершин
+ * @returns {Float32Array} массив.
+ */
+export function vertexToArray(vertices)
 {
     const data = new Float32Array(vertices.length * 3);
 
@@ -16,15 +22,25 @@ export function createVertexArray(vertices)
     return data;
 }
 
+/**
+ * Создает сетку из треуголиников.
+ *
+ * @param {number} cols - количество столбцов.
+ * @param {number} rows - количество строк.
+ * @param {number} size - физический размер всей сетки. Не может превышать 2
+ * @returns {Object} Объект с данными сетки.
+ */
 export function generateGrid(cols, rows, size = 1.2) {
 
     const vertices = [];
     const triangleIndices = [];
     const lineIndices = [];
 
+    // расстояния через которые проходит каждая вершина
     const dx = size / cols;
     const dy = size / rows;
 
+    // вычисляем левый верхний угол
     const startX = -size / 2;
     const startY = size / 2;
 
@@ -35,16 +51,18 @@ export function generateGrid(cols, rows, size = 1.2) {
         }
     }
 
-    const stride = cols + 1;
+    const stride = cols + 1; // так как количество квадратов больще чем вершин на 1
 
     // ---------- индексы ----------
     for (let y = 0; y < rows; y++) {
         for (let x = 0; x < cols; x++) {
 
-            const v0 = y * stride + x;
-            const v1 = v0 + 1;
-            const v2 = v0 + stride;
-            const v3 = v2 + 1;
+
+            // расположение от центра квадрата
+            const v0 = y * stride + x; // ←↑ высота
+            const v1 = v0 + 1; // →↑
+            const v2 = v0 + stride; // ←↓
+            const v3 = v2 + 1; // →↓
 
             // два треугольника
             triangleIndices.push(
