@@ -33,12 +33,12 @@ export function createOrbitCamera(vertices) {
     const dx = minX - centerX;
     const dy = maxY - centerY;
     const dz = height;
-    const distance = Math.hypot(dx, dy, dz);
+    // const distance = Math.hypot(dx, dy, dz);
 
     return {
-        yaw: Math.atan2(dx, dy),
-        pitch: Math.asin(dz / distance),
-        distance,
+        yaw: 0.6,
+        pitch: 0.65,
+        distance: 3.4,
         dragging: false,
         lastX: 0,
         lastY: 0,
