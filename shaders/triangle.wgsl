@@ -1,3 +1,11 @@
+struct Camera
+{
+    viewProjection : mat4x4<f32>,
+};
+
+@group(0) @binding(0)
+var<uniform> camera : Camera;
+
 struct VertexInput
 {
     @location(0)
@@ -15,7 +23,7 @@ fn vertexMain(input : VertexInput) -> VertexOutput
 {
     var output : VertexOutput;
 
-    output.position = vec4f(input.position, 1.0);
+    output.position = camera.viewProjection * vec4f(input.position, 1.0);
 
     return output;
 }
@@ -23,5 +31,5 @@ fn vertexMain(input : VertexInput) -> VertexOutput
 @fragment
 fn fragmentMain() -> @location(0) vec4f
 {
-    return vec4(1.0, 0.0, 0.0, 1.0);
+    return vec4f(1.0, 0.0, 0.0, 1.0);
 }

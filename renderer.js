@@ -1,5 +1,10 @@
 import { vertexToArray } from './grid.js';
 import { createConstraints, solveConstraints } from './constraint.js';
+import * as mat4 from './mat4.js';
+
+const projection = mat4.create();
+const view = mat4.create();
+const viewProjection = mat4.create();
 
 let clothVertices = [];
 
@@ -33,6 +38,33 @@ function createIndexBuffer(device, indices) {
     device.queue.writeBuffer(buffer, 0, indices);
 
     return buffer;
+}
+
+function updateCamera(device, cameraBuffer, canvas, vertices) {
+    let minX = Infinity, maxX = -Infinity;
+    let minY = Infinity, maxY = -Infinity;
+
+    for (const v of vertices) {
+        minX = Math.min(minX, v.position.x);
+        maxX = Math.max(maxX, v.position.x);
+        minY = Math.min(minY, v.position.y);
+        maxY = Math.max(maxY, v.position.y);
+    }
+
+    const centerX = (minX + maxX) / 2;
+    const centerY = (minY + maxY) / 2;
+    const height = Math.max(maxX - minX, maxY - minY) * 2;
+
+    const aspect = canvas.width / canvas.height;
+
+    mat4.perspectiveZO(projection, Math.PI / 4, aspect, 0.1, 100);
+    mat4.lookAt(view,
+        [minX, maxY, height],
+        [centerX, centerY, 0],
+        [0, 1, 0]
+    );
+    mat4.multiply(viewProjection, projection, view);
+    device.queue.writeBuffer(cameraBuffer, 0, viewProjection);
 }
 
 async function createPipeline(device, format, shaderFile, topology, fragmentEntry) {
@@ -80,6 +112,11 @@ export async function createRenderer(device, context, format, grid) {
 
     const triangleIndexBuffer = createIndexBuffer(device, grid.triangleIndices);
     const lineIndexBuffer = createIndexBuffer(device, grid.lineIndices);
+    const cameraBuffer = device.createBuffer({
+        size: 64, // mat4x4<f32>
+        usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
+    });
+    
 
     const fillPipeline = await createPipeline(
         device,
@@ -96,7 +133,29 @@ export async function createRenderer(device, context, format, grid) {
         "line-list",
         "lineFragment"
     );
-    
+
+    const cameraBindGroup = device.createBindGroup({
+        layout: fillPipeline.getBindGroupLayout(0),
+        entries: [
+            {
+                binding: 0,
+                resource: { buffer: cameraBuffer }
+            }
+        ]
+    });
+
+    const lineCameraBindGroup = device.createBindGroup({
+        layout: linePipeline.getBindGroupLayout(0),
+        entries: [
+            {
+                binding: 0,
+                resource: { buffer: cameraBuffer }
+            }
+        ]
+    });
+
+    const canvas = context.canvas;
+
     // высчитываем центральную вершину
     const center = Math.floor(clothVertices.length / 2);
 
@@ -117,6 +176,7 @@ export async function createRenderer(device, context, format, grid) {
 
         // отправляем новые вершины на GPU
         updateVertexBuffer(device, vertexBuffer);
+        updateCamera(device, cameraBuffer, canvas, clothVertices);
 
         const encoder = device.createCommandEncoder();
 
@@ -131,10 +191,12 @@ export async function createRenderer(device, context, format, grid) {
 
         renderPass.setVertexBuffer(0, vertexBuffer);
 
+        renderPass.setBindGroup(0, cameraBindGroup);
         renderPass.setPipeline(fillPipeline);
         renderPass.setIndexBuffer(triangleIndexBuffer, "uint16");
         renderPass.drawIndexed(grid.triangleIndices.length);
 
+        renderPass.setBindGroup(0, lineCameraBindGroup);
         renderPass.setPipeline(linePipeline);
         renderPass.setIndexBuffer(lineIndexBuffer, "uint16");
         renderPass.drawIndexed(grid.lineIndices.length);
