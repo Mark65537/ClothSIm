@@ -16,16 +16,16 @@ function setupCanvas() {
 }
 
 function setupEventListeners(orbit) {
-    canvas.addEventListener("mousedown", (e) => {
-        if (e.button !== 0) return;
+    canvas.addEventListener("pointerdown", (e) => {
         beginDrag(orbit, e.clientX, e.clientY);
+        canvas.setPointerCapture(e.pointerId);
     });
 
-    window.addEventListener("mouseup", () => {
+    canvas.addEventListener("pointerup", () => {
         endDrag(orbit);
     });
 
-    window.addEventListener("mousemove", (e) => {
+    canvas.addEventListener("pointermove", (e) => {
         dragOrbit(orbit, e.clientX, e.clientY);
     });
 }
