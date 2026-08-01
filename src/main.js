@@ -1,7 +1,7 @@
 import { initWebGPU } from "./webGPU.js";
 import { generateGrid } from "./grid.js";
 import { createRenderer } from "./renderer.js";
-import { createOrbitCamera, beginDrag, endDrag, dragOrbit } from "./camera.js";
+import { createOrbitCamera, beginDrag, endDrag, dragOrbit, zoomOrbit } from "./camera.js";
 
 const COLS = 2, ROWS = 2, //количество квадратов, не вершин
 SIZE = 1.2;
@@ -28,6 +28,11 @@ function setupEventListeners(orbit) {
     canvas.addEventListener("pointermove", (e) => {
         dragOrbit(orbit, e.clientX, e.clientY);
     });
+
+    canvas.addEventListener("wheel", (e) => {
+        e.preventDefault();
+        zoomOrbit(orbit, e.deltaY);
+    }, { passive: false });
 }
 
 async function main() {

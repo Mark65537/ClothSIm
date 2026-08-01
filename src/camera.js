@@ -84,4 +84,6 @@ export function dragOrbit(orbit, x, y) {
 
     orbit.yaw -= dx * SENSITIVITY;
     orbit.pitch = Math.max(MIN_PITCH, Math.min(MAX_PITCH, orbit.pitch - dy * SENSITIVITY));
+export function zoomOrbit(orbit, deltaY) {
+    orbit.distance = Math.max(1.2, Math.min(12, orbit.distance * (1 + Math.sign(deltaY) * 0.08)));
 }
