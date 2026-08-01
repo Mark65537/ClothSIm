@@ -1,11 +1,6 @@
 import { vertexToArray } from './grid.js';
 import { createConstraints, solveConstraints } from './constraint.js';
-import * as mat4 from './mat4.js';
-
-const projection = mat4.create();
-const view = mat4.create();
-const viewProjection = mat4.create();
-
+import { updateCamera } from './camera.js';
 let clothVertices = [];
 
 async function loadShader(device, path) {
@@ -38,33 +33,6 @@ function createIndexBuffer(device, indices) {
     device.queue.writeBuffer(buffer, 0, indices);
 
     return buffer;
-}
-
-function updateCamera(device, cameraBuffer, canvas, vertices) {
-    let minX = Infinity, maxX = -Infinity;
-    let minY = Infinity, maxY = -Infinity;
-
-    for (const v of vertices) {
-        minX = Math.min(minX, v.position.x);
-        maxX = Math.max(maxX, v.position.x);
-        minY = Math.min(minY, v.position.y);
-        maxY = Math.max(maxY, v.position.y);
-    }
-
-    const centerX = (minX + maxX) / 2;
-    const centerY = (minY + maxY) / 2;
-    const height = Math.max(maxX - minX, maxY - minY) * 2;
-
-    const aspect = canvas.width / canvas.height;
-
-    mat4.perspectiveZO(projection, Math.PI / 4, aspect, 0.1, 100);
-    mat4.lookAt(view,
-        [minX, maxY, height],
-        [centerX, centerY, 0],
-        [0, 1, 0]
-    );
-    mat4.multiply(viewProjection, projection, view);
-    device.queue.writeBuffer(cameraBuffer, 0, viewProjection);
 }
 
 async function createPipeline(device, format, shaderFile, topology, fragmentEntry) {
@@ -102,7 +70,7 @@ async function createPipeline(device, format, shaderFile, topology, fragmentEntr
 
 }
 
-export async function createRenderer(device, context, format, grid) {
+export async function createRenderer(device, context, format, grid, orbit) {
 
     clothVertices = grid.vertices;// Все вершины в типе Vertex
     const gpuVertices = vertexToArray(clothVertices);
@@ -176,7 +144,7 @@ export async function createRenderer(device, context, format, grid) {
 
         // отправляем новые вершины на GPU
         updateVertexBuffer(device, vertexBuffer);
-        updateCamera(device, cameraBuffer, canvas, clothVertices);
+        updateCamera(device, cameraBuffer, canvas, clothVertices, orbit);
 
         const encoder = device.createCommandEncoder();
 

@@ -1,5 +1,5 @@
 /** Инициализация WebGPU*/
-export async function initWebGPU(canvasId = "canvas") {
+export async function initWebGPU(canvas) {
     if (!navigator.gpu) {
         alert("WebGPU не поддерживается");
         return;
@@ -9,13 +9,7 @@ export async function initWebGPU(canvasId = "canvas") {
     if (!adapter) throw new Error("Не удалось получить GPU Adapter.");
 
     const device = await adapter.requestDevice();
-    device.lost.then(() => { throw new Error("Не удалось получить GPU Device.") });
-
-    const canvas = document.getElementById(canvasId);
-    // для четкости вывода
-    const devicePixelRatio = window.devicePixelRatio;
-    canvas.width = canvas.clientWidth * devicePixelRatio;
-    canvas.height = canvas.clientHeight * devicePixelRatio;
+    device.lost.then(() => { throw new Error("Не удалось получить GPU Device.") });    
 
     const context = canvas.getContext("webgpu");
     if (!context) throw new Error("WebGPU context не создан");
