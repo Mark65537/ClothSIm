@@ -1,5 +1,6 @@
 import { vertexToArray } from './grid.js';
 import { createConstraints, solveConstraints } from './constraint.js';
+import { integrate, syncOldPositions } from './integrator.js';
 import { updateCamera } from './camera.js';
 let clothVertices = [];
 
@@ -127,20 +128,28 @@ export async function createRenderer(device, context, format, grid, orbit) {
     // высчитываем центральную вершину
     const center = Math.floor(clothVertices.length / 2);
 
-    //TODO : вынести в отдельную функцию
+    const CONSTRAINT_ITERATIONS = 5;
+    const MAX_DT = 1 / 30;
+    let lastTime = performance.now() * 0.001;
+
     function render() {
 
         // update
         const time = performance.now() * 0.001;
+        const dt = Math.min(time - lastTime, MAX_DT);
+        lastTime = time;
 
+        integrate(clothVertices, dt);
 
         // изменение данных ткани
         clothVertices[center].position.z = Math.sin(time) * 0.2;
 
-        // учитываются все вершины а не одна
-        for (let i = 0; i < 5; i++) {
+        for (let i = 0; i < CONSTRAINT_ITERATIONS; i++) {
             solveConstraints(clothVertices, constraints);
         }
+
+        // синхронизируем позиции после изменения в constraints
+        syncOldPositions(clothVertices);
 
         // отправляем новые вершины на GPU
         updateVertexBuffer(device, vertexBuffer);
