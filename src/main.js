@@ -42,7 +42,7 @@ async function main() {
     const { device, context, format } = await initWebGPU(canvas);
 
     const grid = generateGrid(COLS, ROWS, SIZE);
-    const orbit = createOrbitCamera(grid.vertices);
+    const orbit = createOrbitCamera();
 
     const render = await createRenderer(
         device,

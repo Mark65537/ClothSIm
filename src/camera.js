@@ -4,37 +4,11 @@ const projection = mat4.create();
 const view = mat4.create();
 const viewProjection = mat4.create();
 
-const SENSITIVITY = 0.005;
-const MIN_PITCH = -Math.PI / 2 + 0.05;
-const MAX_PITCH = Math.PI / 2 - 0.05;
+const SENSITIVITY = 0.006;
+const MIN_PITCH = -1.45;
+const MAX_PITCH = 1.45;
 
-function computeBounds(vertices) {
-    let minX = Infinity, maxX = -Infinity;
-    let minY = Infinity, maxY = -Infinity;
-
-    for (const v of vertices) {
-        minX = Math.min(minX, v.position.x);
-        maxX = Math.max(maxX, v.position.x);
-        minY = Math.min(minY, v.position.y);
-        maxY = Math.max(maxY, v.position.y);
-    }
-
-    return {
-        minX, maxX, minY, maxY,
-        centerX: (minX + maxX) / 2,
-        centerY: (minY + maxY) / 2,
-        size: Math.max(maxX - minX, maxY - minY),
-    };
-}
-
-export function createOrbitCamera(vertices) {
-    const { minX, maxY, centerX, centerY, size } = computeBounds(vertices);
-    const height = size * 2;
-    const dx = minX - centerX;
-    const dy = maxY - centerY;
-    const dz = height;
-    // const distance = Math.hypot(dx, dy, dz);
-
+export function createOrbitCamera() {
     return {
         yaw: 0.6,
         pitch: 0.65,
@@ -45,21 +19,17 @@ export function createOrbitCamera(vertices) {
     };
 }
 
-export function updateCamera(device, cameraBuffer, canvas, vertices, orbit) {
-    const { centerX, centerY } = computeBounds(vertices);
-    const target = [centerX, centerY, 0];
-
-    const horizontal = orbit.distance * Math.cos(orbit.pitch);
+export function updateCamera(device, cameraBuffer, canvas, orbit) {
+    const cp = Math.cos(orbit.pitch);
+    const sp = Math.sin(orbit.pitch);
     const eye = [
-        target[0] + horizontal * Math.sin(orbit.yaw),
-        target[1] + horizontal * Math.cos(orbit.yaw),
-        target[2] + orbit.distance * Math.sin(orbit.pitch),
+        orbit.distance * cp * Math.sin(orbit.yaw),
+        orbit.distance * sp,
+        orbit.distance * cp * Math.cos(orbit.yaw),
     ];
 
-    const aspect = canvas.width / canvas.height;
-
-    mat4.perspectiveZO(projection, Math.PI / 4, aspect, 0.1, 100);
-    mat4.lookAt(view, eye, target, [0, 1, 0]);
+    mat4.lookAt(view, eye, [0, 0, 0], [0, 1, 0]);
+    mat4.perspectiveZO(projection, (50 * Math.PI) / 180, canvas.width / canvas.height, 0.05, 50);
     mat4.multiply(viewProjection, projection, view);
     device.queue.writeBuffer(cameraBuffer, 0, viewProjection);
 }
@@ -83,7 +53,9 @@ export function dragOrbit(orbit, x, y) {
     orbit.lastY = y;
 
     orbit.yaw -= dx * SENSITIVITY;
-    orbit.pitch = Math.max(MIN_PITCH, Math.min(MAX_PITCH, orbit.pitch - dy * SENSITIVITY));
+    orbit.pitch = Math.max(MIN_PITCH, Math.min(MAX_PITCH, orbit.pitch + dy * SENSITIVITY));
+}
+
 export function zoomOrbit(orbit, deltaY) {
     orbit.distance = Math.max(1.2, Math.min(12, orbit.distance * (1 + Math.sign(deltaY) * 0.08)));
 }

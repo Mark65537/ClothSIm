@@ -144,7 +144,7 @@ export async function createRenderer(device, context, format, grid, orbit) {
 
         // отправляем новые вершины на GPU
         updateVertexBuffer(device, vertexBuffer);
-        updateCamera(device, cameraBuffer, canvas, clothVertices, orbit);
+        updateCamera(device, cameraBuffer, canvas, orbit);
 
         const encoder = device.createCommandEncoder();
 
