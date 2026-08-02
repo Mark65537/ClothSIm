@@ -1,6 +1,6 @@
 import { vertexToArray, computeNormals } from './grid.js';
 import { createConstraints, solveConstraints, restorePinnedVertices } from './constraint.js';
-import { integrate, syncOldPositions } from './integrator.js';
+import { integrate } from './integrator.js';
 import { updateCamera } from './camera.js';
 let clothVertices = [];
 
@@ -169,8 +169,6 @@ export async function createRenderer(device, context, format, grid, orbit, appSe
             }
 
             clothVertices[center].position.z = waveZ;
-            // синхронизируем позиции после изменения в constraints
-            syncOldPositions(clothVertices);
         }
 
         // отправляем новые вершины на GPU

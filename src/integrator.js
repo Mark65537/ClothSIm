@@ -43,18 +43,3 @@ export function integrate(vertices, dt, acceleration = NO_FORCE, damping = DEFAU
         v.position.z = pz + vz + acceleration.z * dtSq;
     }
 }
-
-/**
- * Копирует position → oldPosition.
- *
- * Нужно вызывать после constraints и кинематических правок (sin-анимация),
- * иначе смещения от ограничений будут восприниматься как скорость
- * и накапливаться от кадра к кадру — углы начнут «складываться».
- */
-export function syncOldPositions(vertices) {
-    for (const v of vertices) {
-        v.oldPosition.x = v.position.x;
-        v.oldPosition.y = v.position.y;
-        v.oldPosition.z = v.position.z;
-    }
-}
