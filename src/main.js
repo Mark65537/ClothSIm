@@ -3,7 +3,7 @@ import { generateGrid } from "./grid.js";
 import { createRenderer } from "./renderer.js";
 import { createOrbitCamera, beginDrag, endDrag, dragOrbit, zoomOrbit } from "./camera.js";
 
-const COLS = 10, ROWS = 10, //количество квадратов, не вершин
+const COLS = 32, ROWS = 32, //количество квадратов, не вершин
 SIZE = 1.2;
 
 const DEFAULT_SETTINGS = {

@@ -23,42 +23,46 @@ export function createConstraints(vertices, cols, rows) {
     // выравнивание по вершинам
     const stride = cols + 1;
 
-    for (let y = 0; y < rows; y++) {
+    // строятся связи индексов между соседними вершинами
+    // горизонтальная связь
+    for (let y = 0; y <= rows; y++) {
         for (let x = 0; x < cols; x++) {
 
             const curIndex = y * stride + x;
+            constraints.push(new Constraint(
+                curIndex,
+                curIndex + 1,
+                distance3D(vertices[curIndex].position, vertices[curIndex + 1].position)
+            ));
+        }
+    }
 
-            // строятся связи индексов между соседними вершинами
-            // горизонтальная связь
-            if (x < cols) {
-                constraints.push(new Constraint(
-                    curIndex,
-                    curIndex + 1,
-                    distance3D(vertices[curIndex].position, vertices[curIndex + 1].position)
-                ));
-            }
-            // Вертикальная связь
-            if (y < rows) {
-                constraints.push(new Constraint(
-                    curIndex,
-                    curIndex + stride,
-                    distance3D(vertices[curIndex].position, vertices[curIndex + stride].position)
-                ));
-            }
+    // Вертикальная связь
+    for (let y = 0; y < rows; y++) {
+        for (let x = 0; x <= cols; x++) {
+            const curIndex = y * stride + x;
+            constraints.push(new Constraint(
+                curIndex,
+                curIndex + stride,
+                distance3D(vertices[curIndex].position, vertices[curIndex + stride].position)
+            ));
+        }
+    }
 
-            // Диагональные связи (обе — иначе квадраты могут складываться)
-            if (x < cols && y < rows) {
-                constraints.push(new Constraint(
-                    curIndex,
-                    curIndex + stride + 1,
-                    distance3D(vertices[curIndex].position, vertices[curIndex + stride + 1].position)
-                ));
-                constraints.push(new Constraint(
-                    curIndex + 1,
-                    curIndex + stride,
-                    distance3D(vertices[curIndex + 1].position, vertices[curIndex + stride].position)
-                ));
-            }
+    // Диагональные связи (обе — иначе квадраты могут складываться)
+    for (let y = 0; y < rows; y++) {
+        for (let x = 0; x < cols; x++) {
+            const curIndex = y * stride + x;
+            constraints.push(new Constraint(
+                curIndex,
+                curIndex + stride + 1,
+                distance3D(vertices[curIndex].position, vertices[curIndex + stride + 1].position)
+            ));
+            constraints.push(new Constraint(
+                curIndex + 1,
+                curIndex + stride,
+                distance3D(vertices[curIndex + 1].position, vertices[curIndex + stride].position)
+            ));
         }
     }
 
