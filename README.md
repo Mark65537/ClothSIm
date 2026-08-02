@@ -1,5 +1,11 @@
 # Симуляция ткани на WebGPU
 
+![WebGPU](https://img.shields.io/badge/WebGPU-Graphics%20API-blue)
+![JavaScript](https://img.shields.io/badge/JavaScript-ES2022-yellow)
+![WGSL](https://img.shields.io/badge/WGSL-Shader-orange)
+![PBD](https://img.shields.io/badge/Physics-Position%20Based%20Dynamics-green)
+![No Three.js](https://img.shields.io/badge/Three.js-Not%20used-red)
+
 Ткань симулируется методом Position Based Dynamics (PBD) на CPU: интегратор Верле,
 дистанционные ограничения и гравитация считаются в JavaScript. WebGPU используется
 только для отрисовки — заливка треугольников и wireframe поверх. Никаких three.js
@@ -72,8 +78,9 @@ python -m http.server 8099
    - structural — горизонталь и вертикаль между соседями;
    - shear — обе диагонали каждого квадрата;
    - bend — связи через одну вершину для стабилизации краёв.
-4. **Синхронизация** — `oldPosition ← position`, чтобы смещения от constraints
-   не накапливались как лишняя скорость.
+4. **Сохранение инерции** — `oldPosition` не перезаписывается после constraints,
+   поэтому позиционные поправки участвуют в следующем Verlet-шаге как скорость
+   и помогают волнам распространяться от движимой вершины
 
 После физики считаются нормали конечными разностями, вершины отправляются в GPU-буфер,
 рисуется заливка и опционально wireframe.
