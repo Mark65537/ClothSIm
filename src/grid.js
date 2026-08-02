@@ -6,20 +6,85 @@ import Vertex from "./Vertex.js";
  * @param {Vertex[]} vertices - массив вершин
  * @returns {Float32Array} массив.
  */
-export function vertexToArray(vertices)
+export function vertexToArray(vertices, normals)
 {
-    const data = new Float32Array(vertices.length * 3);
+    const data = new Float32Array(vertices.length * 6);
 
     for(let i = 0; i < vertices.length; i++)
     {
         const v = vertices[i];
+        const n = normals[i];
+        const offset = i * 6;
 
-        data[i * 3 + 0] = v.position.x;
-        data[i * 3 + 1] = v.position.y;
-        data[i * 3 + 2] = v.position.z;
+        data[offset + 0] = v.position.x;
+        data[offset + 1] = v.position.y;
+        data[offset + 2] = v.position.z;
+        data[offset + 3] = n.x;
+        data[offset + 4] = n.y;
+        data[offset + 5] = n.z;
     }
 
     return data;
+}
+
+/**
+ * Считает нормали по соседям в сетке — конечными разностями.
+ *
+ * @param {Vertex[]} vertices - массив вершин
+ * @param {number} cols - количество столбцов
+ * @param {number} rows - количество строк
+ * @returns {Object[]} массив нормалей { x, y, z }
+ */
+export function computeNormals(vertices, cols, rows)
+{
+    const stride = cols + 1;
+    const normals = new Array(vertices.length);
+
+    for (let y = 0; y <= rows; y++) {
+        for (let x = 0; x <= cols; x++) {
+            const i = y * stride + x;
+
+            const left = x > 0 ? i - 1 : i;
+            const right = x < cols ? i + 1 : i;
+            const up = y > 0 ? i - stride : i;
+            const down = y < rows ? i + stride : i;
+
+            const pl = vertices[left].position;
+            const pr = vertices[right].position;
+            const pu = vertices[up].position;
+            const pd = vertices[down].position;
+
+            const dx = {
+                x: pr.x - pl.x,
+                y: pr.y - pl.y,
+                z: pr.z - pl.z,
+            };
+            const dy = {
+                x: pd.x - pu.x,
+                y: pd.y - pu.y,
+                z: pd.z - pu.z,
+            };
+
+            let nx = dy.y * dx.z - dy.z * dx.y;
+            let ny = dy.z * dx.x - dy.x * dx.z;
+            let nz = dy.x * dx.y - dy.y * dx.x;
+
+            const len = Math.hypot(nx, ny, nz);
+            if (len > 1e-8) {
+                nx /= len;
+                ny /= len;
+                nz /= len;
+            } else {
+                nx = 0;
+                ny = 0;
+                nz = 1;
+            }
+
+            normals[i] = { x: nx, y: ny, z: nz };
+        }
+    }
+
+    return normals;
 }
 
 /**

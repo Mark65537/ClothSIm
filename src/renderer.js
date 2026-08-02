@@ -1,4 +1,4 @@
-import { vertexToArray } from './grid.js';
+import { vertexToArray, computeNormals } from './grid.js';
 import { createConstraints, solveConstraints, restorePinnedVertices } from './constraint.js';
 import { integrate, syncOldPositions } from './integrator.js';
 import { updateCamera } from './camera.js';
@@ -9,8 +9,9 @@ async function loadShader(device, path) {
     return device.createShaderModule({ code });
 }
 
-function updateVertexBuffer(device, vertexBuffer) {
-    const gpuVertices = vertexToArray(clothVertices);
+function updateVertexBuffer(device, vertexBuffer, cols, rows) {
+    const normals = computeNormals(clothVertices, cols, rows);
+    const gpuVertices = vertexToArray(clothVertices, normals);
     device.queue.writeBuffer(vertexBuffer, 0, gpuVertices);
 }
 
@@ -36,7 +37,7 @@ function createIndexBuffer(device, indices) {
     return buffer;
 }
 
-async function createPipeline(device, format, shaderFile, topology, fragmentEntry) {
+async function createPipeline(device, format, shaderFile, topology, fragmentEntry, vertexBuffers) {
 
     const shader = await loadShader(device, shaderFile);
 
@@ -47,14 +48,7 @@ async function createPipeline(device, format, shaderFile, topology, fragmentEntr
         vertex: {
             module: shader,
             entryPoint: "vertexMain",
-            buffers: [{
-                arrayStride: 12,
-                attributes: [{
-                    shaderLocation: 0,
-                    offset: 0,
-                    format: "float32x3"
-                }]
-            }]
+            buffers: vertexBuffers
         },
 
         fragment: {
@@ -71,10 +65,26 @@ async function createPipeline(device, format, shaderFile, topology, fragmentEntr
 
 }
 
+const positionNormalLayout = [{
+    arrayStride: 24,
+    attributes: [
+        { shaderLocation: 0, offset: 0, format: "float32x3" },
+        { shaderLocation: 1, offset: 12, format: "float32x3" }
+    ]
+}];
+
+const positionLayout = [{
+    arrayStride: 24,
+    attributes: [
+        { shaderLocation: 0, offset: 0, format: "float32x3" }
+    ]
+}];
+
 export async function createRenderer(device, context, format, grid, orbit, appSettings) {
 
     clothVertices = grid.vertices;// Все вершины в типе Vertex
-    const gpuVertices = vertexToArray(clothVertices);
+    const normals = computeNormals(clothVertices, grid.COLS, grid.ROWS);
+    const gpuVertices = vertexToArray(clothVertices, normals);
     const constraints = createConstraints(clothVertices, grid.COLS, grid.ROWS);
 
     const vertexBuffer = createVertexBuffer(device, gpuVertices);
@@ -92,7 +102,8 @@ export async function createRenderer(device, context, format, grid, orbit, appSe
         format,
         "shaders/triangle.wgsl",
         "triangle-list",
-        "fragmentMain"
+        "fragmentMain",
+        positionNormalLayout
     );
 
     const linePipeline = await createPipeline(
@@ -100,7 +111,8 @@ export async function createRenderer(device, context, format, grid, orbit, appSe
         format,
         "shaders/line.wgsl",
         "line-list",
-        "lineFragment"
+        "lineFragment",
+        positionLayout
     );
 
     const cameraBindGroup = device.createBindGroup({
@@ -162,7 +174,7 @@ export async function createRenderer(device, context, format, grid, orbit, appSe
         }
 
         // отправляем новые вершины на GPU
-        updateVertexBuffer(device, vertexBuffer);
+        updateVertexBuffer(device, vertexBuffer, grid.COLS, grid.ROWS);
         updateCamera(device, cameraBuffer, canvas, orbit);
 
 
