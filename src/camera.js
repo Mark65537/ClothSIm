@@ -23,12 +23,12 @@ export function updateCamera(device, cameraBuffer, canvas, orbit) {
     const cp = Math.cos(orbit.pitch);
     const sp = Math.sin(orbit.pitch);
     const eye = [
+        orbit.distance * cp * Math.cos(orbit.yaw),
         orbit.distance * cp * Math.sin(orbit.yaw),
         orbit.distance * sp,
-        orbit.distance * cp * Math.cos(orbit.yaw),
     ];
 
-    mat4.lookAt(view, eye, [0, 0, 0], [0, 1, 0]);
+    mat4.lookAt(view, eye, [0, 0, 0], [0, 0, 1]);
     mat4.perspectiveZO(projection, (50 * Math.PI) / 180, canvas.width / canvas.height, 0.05, 50);
     mat4.multiply(viewProjection, projection, view);
     device.queue.writeBuffer(cameraBuffer, 0, viewProjection);
