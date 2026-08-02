@@ -8,15 +8,19 @@ import Vertex from "./Vertex.js";
  */
 export function vertexToArray(vertices)
 {
-    const data = new Float32Array(vertices.length * 3);
+    const data = new Float32Array(vertices.length * 6);
 
     for(let i = 0; i < vertices.length; i++)
     {
         const v = vertices[i];
+        const offset = i * 6;
 
-        data[i * 3 + 0] = v.position.x;
-        data[i * 3 + 1] = v.position.y;
-        data[i * 3 + 2] = v.position.z;
+        data[offset + 0] = v.position.x;
+        data[offset + 1] = v.position.y;
+        data[offset + 2] = v.position.z;
+        data[offset + 3] = v.color.r;
+        data[offset + 4] = v.color.g;
+        data[offset + 5] = v.color.b;
     }
 
     return data;
@@ -30,6 +34,18 @@ export function vertexToArray(vertices)
  * @param {number} size - физический размер всей сетки. Не может превышать 2
  * @returns {Object} Объект с данными сетки.
  */
+const CELL_COLORS = [
+    { r: 0.95, g: 0.35, b: 0.40 },
+    { r: 0.40, g: 0.85, b: 0.50 },
+    { r: 0.40, g: 0.55, b: 0.95 },
+    { r: 0.95, g: 0.82, b: 0.35 },
+];
+
+function cellColor(x, y) {
+    const index = (Math.floor(x / 2) % 2) + (Math.floor(y / 2) % 2) * 2;
+    return CELL_COLORS[index];
+}
+
 export function generateGrid(cols, rows, size = 1.2) {
 
     const vertices = [];
@@ -47,7 +63,12 @@ export function generateGrid(cols, rows, size = 1.2) {
     // ---------- вершины ----------
     for (let y = 0; y <= rows; y++) {
         for (let x = 0; x <= cols; x++) {
-            vertices.push(new Vertex(startX + x * dx, startY - y * dy, 0));
+            vertices.push(new Vertex(
+                startX + x * dx,
+                startY - y * dy,
+                0,
+                cellColor(x, y)
+            ));
         }
     }
 

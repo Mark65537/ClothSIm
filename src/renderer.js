@@ -36,7 +36,7 @@ function createIndexBuffer(device, indices) {
     return buffer;
 }
 
-async function createPipeline(device, format, shaderFile, topology, fragmentEntry) {
+async function createPipeline(device, format, shaderFile, topology, fragmentEntry, vertexBuffers) {
 
     const shader = await loadShader(device, shaderFile);
 
@@ -47,14 +47,7 @@ async function createPipeline(device, format, shaderFile, topology, fragmentEntr
         vertex: {
             module: shader,
             entryPoint: "vertexMain",
-            buffers: [{
-                arrayStride: 12,
-                attributes: [{
-                    shaderLocation: 0,
-                    offset: 0,
-                    format: "float32x3"
-                }]
-            }]
+            buffers: vertexBuffers
         },
 
         fragment: {
@@ -70,6 +63,21 @@ async function createPipeline(device, format, shaderFile, topology, fragmentEntr
     });
 
 }
+
+const positionColorLayout = [{
+    arrayStride: 24,
+    attributes: [
+        { shaderLocation: 0, offset: 0, format: "float32x3" },
+        { shaderLocation: 1, offset: 12, format: "float32x3" }
+    ]
+}];
+
+const positionLayout = [{
+    arrayStride: 24,
+    attributes: [
+        { shaderLocation: 0, offset: 0, format: "float32x3" }
+    ]
+}];
 
 export async function createRenderer(device, context, format, grid, orbit, appSettings) {
 
@@ -92,7 +100,8 @@ export async function createRenderer(device, context, format, grid, orbit, appSe
         format,
         "shaders/triangle.wgsl",
         "triangle-list",
-        "fragmentMain"
+        "fragmentMain",
+        positionColorLayout
     );
 
     const linePipeline = await createPipeline(
@@ -100,7 +109,8 @@ export async function createRenderer(device, context, format, grid, orbit, appSe
         format,
         "shaders/line.wgsl",
         "line-list",
-        "lineFragment"
+        "lineFragment",
+        positionLayout
     );
 
     const cameraBindGroup = device.createBindGroup({
