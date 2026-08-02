@@ -131,7 +131,7 @@ async function main() {
     const grid = generateGrid(COLS, ROWS, SIZE);
     const orbit = createOrbitCamera();
 
-    const render = await createRenderer(
+    const { render, constraintCount } = await createRenderer(
         device,
         context,
         format,
@@ -141,7 +141,7 @@ async function main() {
     );
 
     setupEventListeners(orbit);
-    setupUI(grid.vertices.length, undefined);
+    setupUI(grid.vertices.length, constraintCount);
 
     render();
 }

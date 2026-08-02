@@ -2,11 +2,36 @@ import { distance3D } from "./math.js";
 
 export class Constraint {
 
-    constructor(v1Index, v2Index, distance) {
+    constructor(v1Index, v2Index, distance, batch) {
         this.v1Index = v1Index;
         this.v2Index = v2Index;
         this.distance = distance;
+        this.batch = batch;
     }
+}
+
+/** Батч для параллельного решения ограничений на GPU (без гонок). */
+function constraintBatch(type, x, y) {
+    if (type === "h") return x & 1;
+    if (type === "v") return 2 + (y & 1);
+    return 4 + (x & 1);
+}
+
+/** Упаковка ограничений в GPU-буфер: v1, v2, restLength, batch. */
+export function constraintsToGPUBuffer(constraints) {
+    const data = new ArrayBuffer(constraints.length * 16);
+    const view = new DataView(data);
+
+    for (let i = 0; i < constraints.length; i++) {
+        const c = constraints[i];
+        const offset = i * 16;
+        view.setUint32(offset + 0, c.v1Index, true);
+        view.setUint32(offset + 4, c.v2Index, true);
+        view.setFloat32(offset + 8, c.distance, true);
+        view.setUint32(offset + 12, c.batch, true);
+    }
+
+    return data;
 }
 
 /** Создание неких правил, ограничений */
@@ -34,7 +59,8 @@ export function createConstraints(vertices, cols, rows) {
                 constraints.push(new Constraint(
                     curIndex,
                     curIndex + 1,
-                    distance3D(vertices[curIndex].position, vertices[curIndex + 1].position)
+                    distance3D(vertices[curIndex].position, vertices[curIndex + 1].position),
+                    constraintBatch("h", x, y)
                 ));
             }
             // Вертикальная связь
@@ -42,7 +68,8 @@ export function createConstraints(vertices, cols, rows) {
                 constraints.push(new Constraint(
                     curIndex,
                     curIndex + stride,
-                    distance3D(vertices[curIndex].position, vertices[curIndex + stride].position)
+                    distance3D(vertices[curIndex].position, vertices[curIndex + stride].position),
+                    constraintBatch("v", x, y)
                 ));
             }
 
@@ -51,7 +78,8 @@ export function createConstraints(vertices, cols, rows) {
                 constraints.push(new Constraint(
                     curIndex,
                     curIndex + stride + 1,
-                    distance3D(vertices[curIndex].position, vertices[curIndex + stride + 1].position)
+                    distance3D(vertices[curIndex].position, vertices[curIndex + stride + 1].position),
+                    constraintBatch("d", x, y)
                 ));
             }
         }
