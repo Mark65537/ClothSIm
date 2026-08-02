@@ -71,7 +71,7 @@ async function createPipeline(device, format, shaderFile, topology, fragmentEntr
 
 }
 
-export async function createRenderer(device, context, format, grid, orbit) {
+export async function createRenderer(device, context, format, grid, orbit, appSettings) {
 
     clothVertices = grid.vertices;// Все вершины в типе Vertex
     const gpuVertices = vertexToArray(clothVertices);
@@ -134,7 +134,7 @@ export async function createRenderer(device, context, format, grid, orbit) {
 
     function render() {
 
-        // update
+        // UPDATE
         const time = performance.now() * 0.001;
         const dt = Math.min(time - lastTime, MAX_DT);
         lastTime = time;
@@ -155,6 +155,8 @@ export async function createRenderer(device, context, format, grid, orbit) {
         updateVertexBuffer(device, vertexBuffer);
         updateCamera(device, cameraBuffer, canvas, orbit);
 
+
+        // DRAW
         const encoder = device.createCommandEncoder();
 
         const renderPass = encoder.beginRenderPass({
@@ -173,10 +175,12 @@ export async function createRenderer(device, context, format, grid, orbit) {
         renderPass.setIndexBuffer(triangleIndexBuffer, "uint16");
         renderPass.drawIndexed(grid.triangleIndices.length);
 
-        renderPass.setBindGroup(0, lineCameraBindGroup);
-        renderPass.setPipeline(linePipeline);
-        renderPass.setIndexBuffer(lineIndexBuffer, "uint16");
-        renderPass.drawIndexed(grid.lineIndices.length);
+        if (appSettings.hasWire) {
+            renderPass.setBindGroup(0, lineCameraBindGroup);
+            renderPass.setPipeline(linePipeline);
+            renderPass.setIndexBuffer(lineIndexBuffer, "uint16");
+            renderPass.drawIndexed(grid.lineIndices.length);
+        }
 
         renderPass.end();
 
