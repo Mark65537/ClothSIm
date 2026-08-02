@@ -139,13 +139,22 @@ export async function createRenderer(device, context, format, grid, orbit, appSe
         const dt = Math.min(time - lastTime, MAX_DT);
         lastTime = time;
 
-        integrate(clothVertices, dt);
+        const acceleration = appSettings.hasGravity
+            ? { x: 0, y: 0, z: -appSettings.gravity}
+            : { x: 0, y: 0, z: 0 };
 
-        // изменение данных ткани
-        clothVertices[center].position.z = Math.sin(time) * 0.2;
+        const substeps = Math.max(1, appSettings.substeps);
+        const subDt = dt / substeps;
+        const waveZ = Math.sin(time * Math.PI * 2 * appSettings.frequency) * appSettings.amplitude;
 
-        for (let i = 0; i < CONSTRAINT_ITERATIONS; i++) {
-            solveConstraints(clothVertices, constraints);
+        for (let s = 0; s < substeps; s++) {
+            integrate(clothVertices, subDt, acceleration);
+
+            clothVertices[center].position.z = waveZ;
+
+            for (let i = 0; i < CONSTRAINT_ITERATIONS; i++) {
+                solveConstraints(clothVertices, constraints);
+            }
         }
 
         // синхронизируем позиции после изменения в constraints

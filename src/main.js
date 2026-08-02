@@ -97,6 +97,8 @@ function setupEventListeners(orbit) {
 }
 
 function setDefaultUiValues() {
+    Object.assign(appSettings, DEFAULT_SETTINGS);
+
     // VALUE
     document.getElementById("gravity").checked = DEFAULT_SETTINGS.hasGravity;
     document.getElementById("wire").checked = DEFAULT_SETTINGS.hasWire;
