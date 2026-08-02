@@ -1,5 +1,5 @@
 import { vertexToArray } from './grid.js';
-import { createConstraints, solveConstraints } from './constraint.js';
+import { createConstraints, solveConstraints, restorePinnedVertices } from './constraint.js';
 import { integrate, syncOldPositions } from './integrator.js';
 import { updateCamera } from './camera.js';
 let clothVertices = [];
@@ -125,8 +125,7 @@ export async function createRenderer(device, context, format, grid, orbit, appSe
 
     const canvas = context.canvas;
 
-    // высчитываем центральную вершину
-    const center = Math.floor(clothVertices.length / 2);
+    const center = grid.drivenIndex;
 
     const CONSTRAINT_ITERATIONS = 5;
     const MAX_DT = 1 / 30;
@@ -154,11 +153,13 @@ export async function createRenderer(device, context, format, grid, orbit, appSe
 
             for (let i = 0; i < CONSTRAINT_ITERATIONS; i++) {
                 solveConstraints(clothVertices, constraints);
+                restorePinnedVertices(clothVertices);
             }
-        }
 
-        // синхронизируем позиции после изменения в constraints
-        syncOldPositions(clothVertices);
+            clothVertices[center].position.z = waveZ;
+            // синхронизируем позиции после изменения в constraints
+            syncOldPositions(clothVertices);
+        }
 
         // отправляем новые вершины на GPU
         updateVertexBuffer(device, vertexBuffer);

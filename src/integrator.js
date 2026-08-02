@@ -24,7 +24,7 @@ export function integrate(vertices, dt, acceleration = NO_FORCE, damping = DEFAU
     const dtSq = dt * dt;
 
     for (const v of vertices) {
-        if (v.isPinned) continue;
+        if (v.isPinned || v.isDriven) continue;
 
         const px = v.position.x;
         const py = v.position.y;

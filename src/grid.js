@@ -86,14 +86,19 @@ export function generateGrid(cols, rows, size = 1.2) {
     // Закрепляем углы
     vertices[0].isPinned = true;
     vertices[cols].isPinned = true;
-    vertices[rows * (cols + 1)].isPinned = true;
-    vertices[(rows + 1) * (cols + 1) - 1].isPinned = true;
+    vertices[rows * stride].isPinned = true;
+    vertices[(rows + 1) * stride - 1].isPinned = true;
+
+    // Центральная вершина — кинематическая
+    const drivenIndex = Math.floor(rows / 2) * stride + Math.floor(cols / 2);
+    vertices[drivenIndex].isDriven = true;
 
     return {
         vertices,
         triangleIndices: new Uint16Array(triangleIndices),
         lineIndices: new Uint16Array(lineIndices),
-        COLS: cols, 
-        ROWS: rows
+        COLS: cols,
+        ROWS: rows,
+        drivenIndex,
     };
 }

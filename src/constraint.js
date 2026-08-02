@@ -46,12 +46,39 @@ export function createConstraints(vertices, cols, rows) {
                 ));
             }
 
-            // Диагональные связи
+            // Диагональные связи (обе — иначе квадраты могут складываться)
             if (x < cols && y < rows) {
                 constraints.push(new Constraint(
                     curIndex,
                     curIndex + stride + 1,
                     distance3D(vertices[curIndex].position, vertices[curIndex + stride + 1].position)
+                ));
+                constraints.push(new Constraint(
+                    curIndex + 1,
+                    curIndex + stride,
+                    distance3D(vertices[curIndex + 1].position, vertices[curIndex + stride].position)
+                ));
+            }
+        }
+    }
+
+    // Изгиб — связи через одну вершину, стабилизируют края
+    for (let y = 0; y <= rows; y++) {
+        for (let x = 0; x <= cols; x++) {
+            const curIndex = y * stride + x;
+
+            if (x + 2 <= cols) {
+                constraints.push(new Constraint(
+                    curIndex,
+                    curIndex + 2,
+                    distance3D(vertices[curIndex].position, vertices[curIndex + 2].position)
+                ));
+            }
+            if (y + 2 <= rows) {
+                constraints.push(new Constraint(
+                    curIndex,
+                    curIndex + stride * 2,
+                    distance3D(vertices[curIndex].position, vertices[curIndex + stride * 2].position)
                 ));
             }
         }
@@ -59,6 +86,20 @@ export function createConstraints(vertices, cols, rows) {
 
     console.log(`Создано связей: ${constraints.length}`); // Выведет в консоль, чтобы убедиться, что они есть!
     return constraints;
+}
+
+function isFixed(v) {
+    return v.isPinned || v.isDriven;
+}
+
+export function restorePinnedVertices(vertices) {
+    for (const v of vertices) {
+        if (v.isPinned) {
+            v.position.x = v.restPosition.x;
+            v.position.y = v.restPosition.y;
+            v.position.z = v.restPosition.z;
+        }
+    }
 }
 
 export function solveConstraints(vertices, constraints) {
@@ -83,9 +124,8 @@ export function solveConstraints(vertices, constraints) {
         let offsetY = dy * 0.5 * difference;
         let offsetZ = dz * 0.5 * difference;
 
-        // Смотрим, закреплена ли вершина
-        const w1 = v1.isPinned ? 0 : 1;
-        const w2 = v2.isPinned ? 0 : 1;
+        const w1 = isFixed(v1) ? 0 : 1;
+        const w2 = isFixed(v2) ? 0 : 1;
 
         if (w1 === 0 && w2 === 0) continue; // Обе зафиксированы - не двигаем
 
