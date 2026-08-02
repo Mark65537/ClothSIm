@@ -1,6 +1,6 @@
 import { vertexToArray, computeNormals } from './grid.js';
 import { createConstraints, solveConstraints, restorePinnedVertices } from './constraint.js';
-import { integrate, syncOldPositions } from './integrator.js';
+import { integrate, syncVelocities } from './integrator.js';
 import { updateCamera } from './camera.js';
 let clothVertices = [];
 
@@ -139,7 +139,7 @@ export async function createRenderer(device, context, format, grid, orbit, appSe
 
     const center = grid.drivenIndex;
 
-    const CONSTRAINT_ITERATIONS = 5;
+    const CONSTRAINT_ITERATIONS = 1;
     const MAX_DT = 1 / 30;
     let lastTime = performance.now() * 0.001;
 
@@ -151,7 +151,7 @@ export async function createRenderer(device, context, format, grid, orbit, appSe
         lastTime = time;
 
         const acceleration = appSettings.hasGravity
-            ? { x: 0, y: 0, z: -appSettings.gravity}
+            ? { x: 0, y: 0, z: -appSettings.gravity }
             : { x: 0, y: 0, z: 0 };
 
         const substeps = Math.max(1, appSettings.substeps);
@@ -169,8 +169,7 @@ export async function createRenderer(device, context, format, grid, orbit, appSe
             }
 
             clothVertices[center].position.z = waveZ;
-            // синхронизируем позиции после изменения в constraints
-            syncOldPositions(clothVertices);
+            syncVelocities(clothVertices, subDt);
         }
 
         // отправляем новые вершины на GPU

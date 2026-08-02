@@ -102,6 +102,9 @@ export function restorePinnedVertices(vertices) {
             v.position.x = v.restPosition.x;
             v.position.y = v.restPosition.y;
             v.position.z = v.restPosition.z;
+            v.velocity.x = 0;
+            v.velocity.y = 0;
+            v.velocity.z = 0;
         }
     }
 }

@@ -1,58 +1,62 @@
 /**
- * Численный интегратор Верле (Verlet integration).
+ * Semi-implicit Euler + явная скорость
  *
- * Обновляет позиции свободных вершин по их скорости.
- * Скорость выводится из разницы position − oldPosition —
- * отдельный массив скоростей не нужен.
- *
- * После интеграции ограничения (constraints) корректируют позиции,
- * сохраняя форму ткани.
+ * Гравитация накапливается в velocity каждый подшаг и не теряется
+ * после syncVelocities — иначе Verlet + syncOldPositions обнуляет
+ * импульс и сила по Z на плоскости XY почти не видна.
  */
 
 const NO_FORCE = { x: 0, y: 0, z: 0 };
 const DEFAULT_DAMPING = 0.995;
 
 /**
- * Один шаг интегрирования для всех свободных вершин.
- *
  * @param {import("./Vertex.js").default[]} vertices
- * @param {number} dt — шаг времени в секундах
- * @param {{ x: number, y: number, z: number }} [acceleration] — внешнее ускорение (гравитация, ветер и т.д.)
- * @param {number} [damping] — затухание скорости (0..1)
+ * @param {number} dt
+ * @param {{ x: number, y: number, z: number }} [acceleration]
+ * @param {number} [damping]
  */
 export function integrate(vertices, dt, acceleration = NO_FORCE, damping = DEFAULT_DAMPING) {
-    const dtSq = dt * dt;
-
     for (const v of vertices) {
         if (v.isPinned || v.isDriven) continue;
 
-        const px = v.position.x;
-        const py = v.position.y;
-        const pz = v.position.z;
+        v.velocity.x += acceleration.x * dt;
+        v.velocity.y += acceleration.y * dt;
+        v.velocity.z += acceleration.z * dt;
 
-        const vx = (px - v.oldPosition.x) * damping;
-        const vy = (py - v.oldPosition.y) * damping;
-        const vz = (pz - v.oldPosition.z) * damping;
+        v.velocity.x *= damping;
+        v.velocity.y *= damping;
+        v.velocity.z *= damping;
 
-        v.oldPosition.x = px;
-        v.oldPosition.y = py;
-        v.oldPosition.z = pz;
+        v.oldPosition.x = v.position.x;
+        v.oldPosition.y = v.position.y;
+        v.oldPosition.z = v.position.z;
 
-        v.position.x = px + vx + acceleration.x * dtSq;
-        v.position.y = py + vy + acceleration.y * dtSq;
-        v.position.z = pz + vz + acceleration.z * dtSq;
+        v.position.x += v.velocity.x * dt;
+        v.position.y += v.velocity.y * dt;
+        v.position.z += v.velocity.z * dt;
     }
 }
 
 /**
- * Копирует position → oldPosition.
+ * Пересчитывает velocity из фактического смещения после constraints.
  *
- * Нужно вызывать после constraints и кинематических правок (sin-анимация),
- * иначе смещения от ограничений будут восприниматься как скорость
- * и накапливаться от кадра к кадру — углы начнут «складываться».
+ * @param {import("./Vertex.js").default[]} vertices
+ * @param {number} dt
  */
-export function syncOldPositions(vertices) {
+export function syncVelocities(vertices, dt) {
+    const invDt = 1 / dt;
+
     for (const v of vertices) {
+        if (v.isPinned || v.isDriven) {
+            v.velocity.x = 0;
+            v.velocity.y = 0;
+            v.velocity.z = 0;
+        } else {
+            v.velocity.x = (v.position.x - v.oldPosition.x) * invDt;
+            v.velocity.y = (v.position.y - v.oldPosition.y) * invDt;
+            v.velocity.z = (v.position.z - v.oldPosition.z) * invDt;
+        }
+
         v.oldPosition.x = v.position.x;
         v.oldPosition.y = v.position.y;
         v.oldPosition.z = v.position.z;
