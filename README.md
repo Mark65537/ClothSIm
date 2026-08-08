@@ -13,6 +13,8 @@
 
 из требований только Браузер с поддержкой WebGPU: Chrome 113+, Edge 113+ или аналог
 
+Подробнее о том как это реализовывалось можно посмотреть [здесь](https://github.com/Mark65537/My-articles-and-reviews/blob/main/Unfinished/Math/ClothSim.md)
+
 ## Структура проекта
 
 ```text
